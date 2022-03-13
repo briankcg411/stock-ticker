@@ -27,7 +27,7 @@ fun StockListDisplay(stockTickerViewModel: StockTickerViewModel) {
     val companyTypeList = CompanyType.values().map(Enum<*>::name)
     var selectedIndex by remember { mutableStateOf(stockTickerViewModel.selectedCompanyTypeIndex) }
     ConstraintLayout {
-        val (title, column, item, filterGroup) = createRefs()
+        val (title, column, row, filterGroup) = createRefs()
         Text(text = stringResource(R.string.stock_list_title),
             modifier = Modifier.constrainAs(title) {
                 top.linkTo(parent.top)
@@ -51,17 +51,21 @@ fun StockListDisplay(stockTickerViewModel: StockTickerViewModel) {
             })
         LazyColumn(modifier = Modifier
             .padding(top = 10.dp)
+            .fillMaxWidth()
             .constrainAs(column) {
                 top.linkTo(filterGroup.bottom)
-                start.linkTo(filterGroup.start)
+                start.linkTo(parent.start)
             }) {
             tickers?.let { tcks ->
                 items(tcks) { tck ->
-                    Row(modifier = Modifier.constrainAs(item) {
-                        top.linkTo(column.top)
-                        start.linkTo(column.start)
-                    }) {
-                        Text(text = tck.name)
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier
+                        .border(border = ButtonDefaults.outlinedBorder)
+                        .fillMaxWidth()
+                        .constrainAs(row) {
+                            top.linkTo(parent.top)
+                            start.linkTo(parent.start)
+                        }) {
+                        Text(text = tck.name,)
                         Text(text = tck.price.toString())
                     }
                 }
@@ -80,13 +84,14 @@ fun StockListLayout() {
     var companyTypeFilterExpanded by remember { mutableStateOf(false) }
     val companyTypeList = CompanyType.values().map(Enum<*>::name)
 
-    ConstraintLayout {
-        val (title, item, filterGroup) = createRefs()
+    ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
+        val (title, rowView, filterGroup) = createRefs()
         Text(text = stringResource(R.string.stock_list_title),
-            modifier = Modifier.constrainAs(title) {
-                top.linkTo(parent.top)
-                start.linkTo(parent.start)
-            })
+            modifier = Modifier
+                .constrainAs(title) {
+                    top.linkTo(parent.top)
+                    start.linkTo(parent.start)
+                })
         CompanyTypeMenu(companyTypeList, companyTypeFilterExpanded, 0,
             {
                 companyTypeFilterExpanded = true
@@ -100,14 +105,16 @@ fun StockListLayout() {
                 top.linkTo(title.bottom)
                 start.linkTo(title.start)
             })
-        Row(modifier = Modifier
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier
             .padding(top = 10.dp)
-            .constrainAs(item) {
+            .border(border = ButtonDefaults.outlinedBorder)
+            .fillMaxWidth()
+            .constrainAs(rowView) {
                 top.linkTo(filterGroup.bottom)
-                start.linkTo(filterGroup.start)
+                start.linkTo(parent.start)
             }) {
-            Text(text = "Apple")
-            Text(text = "12.222")
+                Text(text = "Apple")
+                Text(text = "12.222")
         }
     }
 }
