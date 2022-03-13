@@ -3,41 +3,62 @@ package com.yum.stockticker
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.yum.stockticker.data.toStockTickers
+import com.yum.stockticker.network.WebSocketClient
+import com.yum.stockticker.ui.theme.StockListDisplay
 import com.yum.stockticker.ui.theme.StockTickerTheme
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
 
 class MainActivity : ComponentActivity() {
+
+    private val webSocket = WebSocketClient()
+    private val tickerViewModel = StockTickerViewModel()
+
+    private val webSocketListener = object : WebSocketListener() {
+
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+            super.onOpen(webSocket, response)
+            println("Connected to websocket")
+        }
+
+        override fun onMessage(webSocket: WebSocket, text: String) {
+            super.onMessage(webSocket, text)
+            println("Got a websocket message: $text")
+            tickerViewModel.stockTickers.postValue(text.toStockTickers())
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             StockTickerTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
-                ) {
-                    Greeting("Android")
-                }
+                StockListDisplay(tickerViewModel)
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
+    override fun onResume() {
+        super.onResume()
+        initWebSocket()
+    }
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    StockTickerTheme {
-        Greeting("Android")
+    override fun onStop() {
+        super.onStop()
+        stopWebSocket()
+    }
+
+    private fun initWebSocket() {
+        webSocket.newWebSocket(Request.Builder().url(STOCKS_WSS).build(), webSocketListener)
+    }
+
+    private fun stopWebSocket() {
+        webSocket.dispatcher.executorService.shutdown()
+    }
+
+    companion object {
+        const val STOCKS_WSS = "wss://interviews.yum.dev/ws/stocks"
     }
 }
